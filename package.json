@@ -1,0 +1,25 @@
+{
+  "name": "kvrock-ssdb-benchmarking",
+  "version": "1.0.0",
+  "description": "Benchmarking tool for comparing SSDB and KVRocks performance",
+  "main": "benchmark.js",
+  "scripts": {
+    "start": "node benchmark.js",
+    "benchmark": "node benchmark.js"
+  },
+  "dependencies": {
+    "canvas": "^3.2.0",
+    "chart.js": "^4.5.0",
+    "chartjs-node-canvas": "^5.0.0",
+    "redis": "^4.0.0"
+  },
+  "keywords": [
+    "benchmark",
+    "ssdb",
+    "kvrocks",
+    "database",
+    "performance"
+  ],
+  "author": "",
+  "license": "MIT"
+}

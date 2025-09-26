@@ -1,0 +1,47 @@
+{
+  "timestamp": "2025-09-25T15:01:58.080Z",
+  "overallImprovement": "99.2%",
+  "keyFindings": [
+    "KVRocks delivers 99.2% faster performance overall",
+    "Consistent low latency across all operations (0.1-0.2ms mean)",
+    "Superior P95/P99 performance indicating better tail latency",
+    "DELETE operations show the highest improvement (99.5%)"
+  ],
+  "operationBreakdown": [
+    {
+      "operation": "SET",
+      "SSDB_Mean": 20.314,
+      "KVRocks_Mean": 0.192,
+      "SSDB_P95": 31.358,
+      "KVRocks_P95": 0.331,
+      "SSDB_Max": 54.039,
+      "KVRocks_Max": 1.507,
+      "improvement": "99.1"
+    },
+    {
+      "operation": "GET",
+      "SSDB_Mean": 14.931,
+      "KVRocks_Mean": 0.183,
+      "SSDB_P95": 30.972,
+      "KVRocks_P95": 0.322,
+      "SSDB_Max": 33.075,
+      "KVRocks_Max": 1.682,
+      "improvement": "98.8"
+    },
+    {
+      "operation": "DEL",
+      "SSDB_Mean": 23.321,
+      "KVRocks_Mean": 0.123,
+      "SSDB_P95": 31.533,
+      "KVRocks_P95": 0.192,
+      "SSDB_Max": 61.499,
+      "KVRocks_Max": 0.743,
+      "improvement": "99.5"
+    }
+  ],
+  "recommendations": {
+    "primary": "Migration to KVRocks is strongly recommended based on these results",
+    "reasoning": "The dramatic performance improvement (99.2% faster) combined with consistent low latency makes KVRocks the clear choice for high-performance applications requiring sub-millisecond response times",
+    "nextSteps": "Consider implementing buffer serialization optimizations (JSON-Pack/MessagePack) on KVRocks to achieve even better performance gains"
+  }
+}
