@@ -116,51 +116,139 @@ class DatabaseBenchmark {
     async measureStorageSize(dbType) {
         try {
             if (dbType === 'ssdb') {
-                // For SSDB, estimate storage by sampling key sizes
+                // For SSDB, estimate storage by sampling existing keys
                 const sampleKeys = [`benchmark_key_0`, `benchmark_key_${Math.floor(this.sampleSize/2)}`, `benchmark_key_${this.sampleSize-1}`];
                 let totalSize = 0;
+                let validSamples = 0;
 
                 for (const key of sampleKeys) {
                     try {
                         const value = await this.ssdbClient.get(key);
-                        if (value) {
-                            totalSize += Buffer.byteLength(key, 'utf8') + Buffer.byteLength(value, 'utf8');
+                        if (value && value !== '') {
+                            const keySize = Buffer.byteLength(key, 'utf8');
+                            const valueSize = Buffer.byteLength(value, 'utf8');
+                            totalSize += keySize + valueSize;
+                            validSamples++;
                         }
                     } catch (error) {
                         // Key might not exist, skip
                     }
                 }
 
-                // Estimate total storage (average sample size * total keys)
-                const avgKeySize = totalSize / sampleKeys.length;
-                this.results.ssdb.storage = avgKeySize * this.sampleSize;
+                // If no valid samples found, try to measure from a known data structure
+                if (validSamples === 0) {
+                    // Create a sample entry to measure storage
+                    const testKey = 'storage_test_key';
+                    const testValue = JSON.stringify({
+                        id: 0,
+                        timestamp: Date.now(),
+                        data: Math.random().toString(36).substring(2, 102),
+                        metadata: {
+                            version: '1.0',
+                            tags: ['tag_0', 'category_0'],
+                            score: Math.random() * 100
+                        },
+                        content: Array(10).fill(null).map((_, idx) => ({
+                            field: `field_${idx}`,
+                            value: Math.random().toString(36).substring(2, 20)
+                        }))
+                    });
+
+                    try {
+                        await this.ssdbClient.set(testKey, testValue);
+                        const retrievedValue = await this.ssdbClient.get(testKey);
+                        if (retrievedValue) {
+                            totalSize = Buffer.byteLength(testKey, 'utf8') + Buffer.byteLength(retrievedValue, 'utf8');
+                            validSamples = 1;
+                        }
+                        await this.ssdbClient.del(testKey); // Clean up
+                    } catch (error) {
+                        console.log(`Storage test failed for SSDB: ${error.message}`);
+                    }
+                }
+
+                // Estimate total storage (average sample size * total keys that should exist)
+                if (validSamples > 0) {
+                    const avgKeySize = totalSize / validSamples;
+                    // Count how many keys should actually exist (after SET but before DEL operations)
+                    const estimatedKeys = this.results.ssdb.set.length;
+                    this.results.ssdb.storage = avgKeySize * estimatedKeys;
+                } else {
+                    this.results.ssdb.storage = 0;
+                }
 
             } else if (dbType === 'kvrocks') {
-                // For KVRocks, use Redis memory commands if available
+                // For KVRocks, try Redis memory commands first
                 try {
                     const info = await this.kvrocksClient.sendCommand(['INFO', 'memory']);
                     const memoryMatch = info.match(/used_memory:(\d+)/);
                     if (memoryMatch) {
                         this.results.kvrocks.storage = parseInt(memoryMatch[1]);
+                        return; // Successfully got memory info, no need for fallback
                     }
                 } catch (error) {
-                    // Fallback to sampling like SSDB
-                    const sampleKeys = [`benchmark_key_0`, `benchmark_key_${Math.floor(this.sampleSize/2)}`, `benchmark_key_${this.sampleSize-1}`];
-                    let totalSize = 0;
+                    console.log(`KVRocks INFO memory command failed, falling back to sampling: ${error.message}`);
+                }
 
-                    for (const key of sampleKeys) {
-                        try {
-                            const value = await this.kvrocksClient.get(key);
-                            if (value) {
-                                totalSize += Buffer.byteLength(key, 'utf8') + Buffer.byteLength(value, 'utf8');
-                            }
-                        } catch (error) {
-                            // Key might not exist, skip
+                // Fallback to sampling approach with improved logic
+                const sampleKeys = [`benchmark_key_0`, `benchmark_key_${Math.floor(this.sampleSize/2)}`, `benchmark_key_${this.sampleSize-1}`];
+                let totalSize = 0;
+                let validSamples = 0;
+
+                for (const key of sampleKeys) {
+                    try {
+                        const value = await this.kvrocksClient.get(key);
+                        if (value && value !== '') {
+                            const keySize = Buffer.byteLength(key, 'utf8');
+                            const valueSize = Buffer.byteLength(value, 'utf8');
+                            totalSize += keySize + valueSize;
+                            validSamples++;
                         }
+                    } catch (error) {
+                        // Key might not exist, skip
                     }
+                }
 
-                    const avgKeySize = totalSize / sampleKeys.length;
-                    this.results.kvrocks.storage = avgKeySize * this.sampleSize;
+                // If no valid samples found, try to measure from a known data structure
+                if (validSamples === 0) {
+                    // Create a sample entry to measure storage
+                    const testKey = 'storage_test_key_kvrocks';
+                    const testValue = JSON.stringify({
+                        id: 0,
+                        timestamp: Date.now(),
+                        data: Math.random().toString(36).substring(2, 102),
+                        metadata: {
+                            version: '1.0',
+                            tags: ['tag_0', 'category_0'],
+                            score: Math.random() * 100
+                        },
+                        content: Array(10).fill(null).map((_, idx) => ({
+                            field: `field_${idx}`,
+                            value: Math.random().toString(36).substring(2, 20)
+                        }))
+                    });
+
+                    try {
+                        await this.kvrocksClient.set(testKey, testValue);
+                        const retrievedValue = await this.kvrocksClient.get(testKey);
+                        if (retrievedValue) {
+                            totalSize = Buffer.byteLength(testKey, 'utf8') + Buffer.byteLength(retrievedValue, 'utf8');
+                            validSamples = 1;
+                        }
+                        await this.kvrocksClient.del(testKey); // Clean up
+                    } catch (error) {
+                        console.log(`Storage test failed for KVRocks: ${error.message}`);
+                    }
+                }
+
+                // Estimate total storage (average sample size * total keys that should exist)
+                if (validSamples > 0) {
+                    const avgKeySize = totalSize / validSamples;
+                    // Count how many keys should actually exist (after SET but before DEL operations)
+                    const estimatedKeys = this.results.kvrocks.set.length;
+                    this.results.kvrocks.storage = avgKeySize * estimatedKeys;
+                } else {
+                    this.results.kvrocks.storage = 0;
                 }
             }
         } catch (error) {
@@ -226,10 +314,6 @@ class DatabaseBenchmark {
         console.log("\n🔄 Running concurrency tests...");
         await this.runConcurrencyTests(testData);
 
-        // Measure storage after operations
-        console.log("\n💾 Measuring storage footprint...");
-        await this.measureAllStorageSizes();
-
         // Display results
         this.displayResults();
     }
@@ -242,6 +326,10 @@ class DatabaseBenchmark {
         // Benchmark GET operations
         console.log("📖 Benchmarking GET operations...");
         await this.benchmarkGetOperations(testData);
+
+        // Measure storage after SET and GET operations, before DELETE
+        console.log("💾 Measuring storage footprint...");
+        await this.measureAllStorageSizes();
 
         // Benchmark DELETE operations
         console.log("🗑️  Benchmarking DELETE operations...");
