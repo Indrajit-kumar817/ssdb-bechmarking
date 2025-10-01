@@ -5,7 +5,8 @@
   "main": "benchmark.js",
   "scripts": {
     "start": "node benchmark.js",
-    "benchmark": "node benchmark.js"
+    "benchmark": "node benchmark.js",
+    "benchmark-msgpack": "node kvrocks_msgpack_vs_ssdb_benchmark.js"
   },
   "dependencies": {
     "canvas": "^3.2.0",

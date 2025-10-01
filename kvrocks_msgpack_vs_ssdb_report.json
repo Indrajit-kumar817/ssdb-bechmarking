@@ -1,0 +1,104 @@
+{
+  "timestamp": "2025-10-01T10:31:39.708Z",
+  "sampleSize": 100000,
+  "comparison": "KVrocks+MessagePack vs SSDB",
+  "performance": {
+    "ssdb": {
+      "set": {
+        "avg": 20.61292771099989,
+        "median": 15.9377,
+        "min": 0.4183,
+        "max": 73.608,
+        "p95": 31.4265,
+        "p99": 31.966
+      },
+      "get": {
+        "avg": 14.706719904999959,
+        "median": 15.4516,
+        "min": 0.1919,
+        "max": 127.0237,
+        "p95": 31.0056,
+        "p99": 31.6044
+      },
+      "del": {
+        "avg": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "p95": 0,
+        "p99": 0
+      },
+      "totalTime": {
+        "set": 2061492,
+        "get": 1470910,
+        "del": 0
+      },
+      "errors": 0
+    },
+    "kvrocks_msgpack": {
+      "set": {
+        "avg": 0.2405869090000004,
+        "median": 0.2075,
+        "min": 0.1207,
+        "max": 27.2672,
+        "p95": 0.4233,
+        "p99": 0.6014
+      },
+      "get": {
+        "avg": 0.4507057729999972,
+        "median": 0.3703,
+        "min": 0.1622,
+        "max": 37.573,
+        "p95": 0.8441,
+        "p99": 1.431
+      },
+      "del": {
+        "avg": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "p95": 0,
+        "p99": 0
+      },
+      "totalTime": {
+        "set": 24175,
+        "get": 45347,
+        "del": 0
+      },
+      "errors": 0,
+      "compressionOverhead": {
+        "avg": 0.08433928599999889,
+        "median": 0.066,
+        "min": 0.0354,
+        "max": 20.2169,
+        "p95": 0.1666,
+        "p99": 0.3649
+      }
+    }
+  },
+  "storage": {
+    "ssdb": {
+      "originalDataSize": 58855620,
+      "compressedDataSize": 60244510,
+      "compressionRatio": 0.9769457831095315,
+      "storageUsed": 60244510,
+      "compressionType": "Built-in automatic compression"
+    },
+    "kvrocks_msgpack": {
+      "originalDataSize": 58856728,
+      "compressedDataSize": 46436044,
+      "compressionRatio": 1.2674793744273307,
+      "storageUsed": 48924934,
+      "compressionType": "Client-side MessagePack compression"
+    }
+  },
+  "analysis": {
+    "performanceWinner": "KVrocks+MessagePack",
+    "storageWinner": "KVrocks+MessagePack",
+    "overallRecommendation": "KVrocks+MessagePack provides both better performance and storage efficiency",
+    "keyFindings": [
+      "KVrocks+MessagePack is 98.0% faster than SSDB",
+      "KVrocks+MessagePack achieves better compression ratio: 1.27x vs 0.98x"
+    ]
+  }
+}
